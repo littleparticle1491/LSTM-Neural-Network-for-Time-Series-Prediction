@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import pandas as pd
 
@@ -13,6 +12,22 @@ class DataLoader():
         self.len_train  = len(self.data_train)
         self.len_test   = len(self.data_test)
         self.len_train_windows = None
+        
+    def y_multiclass(self, x): 
+        '''相对于窗口第一天涨幅进行分类'''
+        pp = x*100
+        if pp < -10:
+            return 0
+        elif pp < -5:
+            return 1
+        elif pp < 0:
+            return 2
+        elif pp < 5:
+            return 3
+        elif pp < 10:
+            return 4
+        else:
+            return 5 
 
     def get_test_data(self, seq_len, normalise):
         '''
@@ -26,9 +41,10 @@ class DataLoader():
 
         data_windows = np.array(data_windows).astype(float)
         data_windows = self.normalise_windows(data_windows, single_window=False) if normalise else data_windows
-
+        
         x = data_windows[:, :-1]
         y = data_windows[:, -1, [0]]
+        y = [[self.y_multiclass(ele[0])] for ele in y]
         return x,y
 
     def get_train_data(self, seq_len, normalise):
@@ -68,17 +84,23 @@ class DataLoader():
         window = self.normalise_windows(window, single_window=True)[0] if normalise else window
         x = window[:-1]
         y = window[-1, [0]]
+        
+        y = [self.y_multiclass(ele) for ele in y]
         return x, y
 
     def normalise_windows(self, window_data, single_window=False):
         '''Normalise window with a base value of zero'''
+        '''相对窗口第一天涨幅'''
         normalised_data = []
         window_data = [window_data] if single_window else window_data
         for window in window_data:
+            
             normalised_window = []
             for col_i in range(window.shape[1]):
                 normalised_col = [((float(p) / float(window[0, col_i])) - 1) for p in window[:, col_i]]
+                
                 normalised_window.append(normalised_col)
+            
             normalised_window = np.array(normalised_window).T # reshape and transpose array back into original multidimensional format
             normalised_data.append(normalised_window)
         return np.array(normalised_data)

@@ -48,7 +48,7 @@
 			},
 			{
 				"type": "dense",
-				"neurons": 1,
+				"neurons": 5,
 				"activation": "softmax"
 			}
 		]
